@@ -31,6 +31,9 @@ def jira_api_config():
     return JIRA(options, basic_auth=(api_user, api_token))
 
 
+# components - list of dicts
+# labels - list
+# attachments - list of filenames/paths
 def create_jira_ticket(title, content, project, issuetype, components=[], labels=[], attachments=[]):
     jira = jira_api_config()
 
