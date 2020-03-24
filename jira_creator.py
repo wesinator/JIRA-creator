@@ -36,6 +36,7 @@ def jira_api_config():
 # attachments - list of filenames/paths
 def create_jira_ticket(title, content, project, issuetype, components=[], labels=[], attachments=[]):
     jira = jira_api_config()
+    JIRA_CHAR_LIMIT = 32767
 
     # Issue creation
     issue_dict = {
@@ -55,7 +56,7 @@ def create_jira_ticket(title, content, project, issuetype, components=[], labels
         print("Error adding text size %d to issue: " % len(content), repr(e))
 
         # Add truncated text and label
-        new_issue.update(description=content[:32767])
+        new_issue.update(description=content[:JIRA_CHAR_LIMIT])
         new_issue.fields.labels.append("Truncated")
         new_issue.update(fields={"labels": new_issue.fields.labels})
 
