@@ -31,20 +31,24 @@ def jira_api_config():
     return JIRA(options, basic_auth=(api_user, api_token))
 
 
-# components - list of dicts
-# labels - list
-# attachments - list of filenames/paths
-def create_jira_ticket(title, content, project, issuetype, components=[], labels=[], attachments=[]):
+def create_jira_ticket(title, content, project, issuetype, **kwargs):
+    """Create JIRA ticket given title, content/description, and project + type
+    other args:
+    components - list of dicts
+    labels - list
+    attachments - list of filenames/paths
+    assignee - dict
+    """
     jira = jira_api_config()
-    JIRA_CHAR_LIMIT = 32767
 
     # Issue creation
     issue_dict = {
         'project': {'key': project},
         'summary': title,
-        'issuetype': {'name': issuetype}, # Hunt issue type,
-        'labels': labels,
-        'components': components,
+        'issuetype': {'name': issuetype},
+        'labels': kwargs.get("labels"),
+        'components': kwargs.get("components"),
+        'assignee': kwargs.get("assignee"),
         }
     new_issue = jira.create_issue(fields=issue_dict)
 
@@ -53,14 +57,14 @@ def create_jira_ticket(title, content, project, issuetype, components=[], labels
     try:
         new_issue.update(description=content)
     except exceptions.JIRAError as e:
-        print("Error adding text size %d to issue: " % len(content), repr(e))
+        print("Error adding text of size %d to issue: " % len(content), e)
 
         # Add truncated text and label
-        new_issue.update(description=content[:JIRA_CHAR_LIMIT])
+        new_issue.update(description=content[:32767])
         new_issue.fields.labels.append("Truncated")
         new_issue.update(fields={"labels": new_issue.fields.labels})
 
-        for attachment in attachments:
+        for attachment in kwargs.get("attachments"):
             try:
                 jira.add_attachment(issue=new_issue, attachment=attachment)
             except (FileNotFoundError, PermissionError) as e:
